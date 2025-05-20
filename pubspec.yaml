@@ -32,11 +32,14 @@ dependencies:
     sdk: flutter
   http: ^0.13.5
   shared_preferences: ^2.0.15
-  fluttertoast: ^8.2.1
+  fluttertoast: ^8.2.12
   provider: ^6.0.5
   intl: ^0.18.1
   cached_network_image: ^3.2.3
   flutter_inappwebview: ^6.1.5
+  syncfusion_flutter_charts: ^29.2.4
+  json_annotation: ^4.8.1
+  mqtt_client: ^10.8.0
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8

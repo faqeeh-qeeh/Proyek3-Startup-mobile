@@ -4,16 +4,17 @@ import 'providers/auth_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/products/product_list_screen.dart';
 import 'screens/orders/order_list_screen.dart';
+import 'screens/devices/device_list_screen.dart'; // Import baru
+
 void main() {
   runApp(
     ChangeNotifierProvider(
       create: (context) => AuthProvider(),
-      child: MyApp(),
+      child: const MyApp(),
     ),
   );
 }
 
-// Ubah MyApp menjadi StatefulWidget
 class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
 
@@ -27,7 +28,7 @@ class _MyAppState extends State<MyApp> {
   final List<Widget> _screens = [
     const ProductListScreen(),
     const OrderListScreen(),
-    // Tambahkan screen lainnya sesuai kebutuhan
+    const DeviceListScreen(), // Tambahkan DeviceListScreen
   ];
 
   @override
@@ -41,39 +42,52 @@ class _MyAppState extends State<MyApp> {
       home: FutureBuilder(
         future: Provider.of<AuthProvider>(context, listen: false).loadUser(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            final auth = Provider.of<AuthProvider>(context);
-            return auth.token != null
-                ? Scaffold(
-                    body: _screens[_currentIndex],
-                    bottomNavigationBar: BottomNavigationBar(
-                      currentIndex: _currentIndex,
-                      onTap: (index) => setState(() => _currentIndex = index),
-                      items: const [
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.shopping_bag),
-                          label: 'Products',
-                        ),
-                        BottomNavigationBarItem(
-                          icon: Icon(Icons.list_alt),
-                          label: 'Orders',
-                        ),
-                        // Tambahkan item lainnya
-                      ],
-                    ),
-                  )
-                : const LoginScreen();
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
           }
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
+          
+          final auth = Provider.of<AuthProvider>(context);
+          
+          return auth.token != null
+              ? Scaffold(
+                  body: IndexedStack(
+                    index: _currentIndex,
+                    children: _screens,
+                  ),
+                  bottomNavigationBar: BottomNavigationBar(
+                    currentIndex: _currentIndex,
+                    onTap: (index) => setState(() => _currentIndex = index),
+                    items: const [
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.shopping_bag),
+                        label: 'Products',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.list_alt),
+                        label: 'Orders',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.devices), // Icon untuk devices
+                        label: 'Devices',
+                      ),
+                    ],
+                    selectedItemColor: Colors.blue,
+                    unselectedItemColor: Colors.grey,
+                    showUnselectedLabels: true,
+                  ),
+                )
+              : const LoginScreen();
         },
       ),
       routes: {
         '/login': (context) => const LoginScreen(),
         '/products': (context) => const ProductListScreen(),
         '/orders': (context) => const OrderListScreen(),
+        '/devices': (context) => const DeviceListScreen(), // Tambahkan route
       },
+      debugShowCheckedModeBanner: false,
     );
   }
 }
