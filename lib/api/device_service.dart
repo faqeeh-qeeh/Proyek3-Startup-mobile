@@ -5,6 +5,7 @@ import '../models/device_monitoring.dart';
 import '../models/relay_status.dart';
 import '../utils/constants.dart';
 import '../utils/shared_prefs.dart';
+import 'dart:async';
 
 class DeviceService {
   static Future<List<ClientDevice>> getDevices() async {
@@ -106,6 +107,62 @@ class DeviceService {
     }
   }
 
+  static Stream<DeviceMonitoring> streamLatestMonitoringData(int deviceId) async* {
+    final token = await SharedPrefs.getToken();
+    final url = Uri.parse('${Constants.apiUrl}/client/devices/$deviceId/latest-data');
+    
+    while (true) {
+      await Future.delayed(const Duration(seconds: 5)); // Refresh setiap 5 detik
+      
+      try {
+        final response = await http.get(
+          url,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        );
 
+        if (response.statusCode == 200) {
+          yield DeviceMonitoring.fromJson(jsonDecode(response.body)['data']);
+        } else {
+          throw Exception('Failed to load monitoring data');
+        }
+      } catch (e) {
+        yield* Stream.error(e);
+      }
+    }
+  }
+static Stream<List<ClientDevice>> streamDevices() async* {
+  final token = await SharedPrefs.getToken();
+  final url = Uri.parse('${Constants.apiUrl}/client/devices');
+  
+  while (true) {
+    await Future.delayed(const Duration(seconds: 5)); // Refresh setiap 10 detik
+    
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
 
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        if (responseData['success'] == true) {
+          final List<dynamic> data = responseData['data'];
+          yield data.map((json) => ClientDevice.fromJson(json)).toList();
+        } else {
+          throw Exception(responseData['message'] ?? 'Failed to load devices');
+        }
+      } else {
+        throw Exception('Failed to load devices: ${response.statusCode}');
+      }
+    } catch (e) {
+      yield* Stream.error(e);
+    }
+  }
+}
 }

@@ -1,6 +1,7 @@
+// lib/models/relay_status.dart
 class RelayStatus {
   final int channel;
-  final String status;
+  String status;
 
   RelayStatus({
     required this.channel,
@@ -13,6 +14,4 @@ class RelayStatus {
       status: json['status'],
     );
   }
-
-  bool get isOn => status == 'on';
 }

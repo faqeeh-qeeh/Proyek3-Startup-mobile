@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 class DeviceMonitoring {
   final int id;
   final int deviceId;
@@ -25,24 +27,30 @@ class DeviceMonitoring {
     return DeviceMonitoring(
       id: json['id'],
       deviceId: json['device_id'],
-      voltage: json['voltage'] is String 
-          ? double.parse(json['voltage'])
-          : json['voltage'].toDouble(),
-      current: json['current'] is String
-          ? double.parse(json['current'])
-          : json['current'].toDouble(),
-      power: json['power'] is String
-          ? double.parse(json['power'])
-          : json['power'].toDouble(),
-      energy: json['energy'] is String
-          ? double.parse(json['energy'])
-          : json['energy'].toDouble(),
-      frequency: json['frequency'] is String
-          ? double.parse(json['frequency'])
-          : json['frequency'].toDouble(),
-      powerFactor: json['power_factor'] is String
-          ? double.parse(json['power_factor'])
-          : json['power_factor'].toDouble(),
+      voltage:
+          json['voltage'] is String
+              ? double.parse(json['voltage'])
+              : json['voltage'].toDouble(),
+      current:
+          json['current'] is String
+              ? double.parse(json['current'])
+              : json['current'].toDouble(),
+      power:
+          json['power'] is String
+              ? double.parse(json['power'])
+              : json['power'].toDouble(),
+      energy:
+          json['energy'] is String
+              ? double.parse(json['energy'])
+              : json['energy'].toDouble(),
+      frequency:
+          json['frequency'] is String
+              ? double.parse(json['frequency'])
+              : json['frequency'].toDouble(),
+      powerFactor:
+          json['power_factor'] is String
+              ? double.parse(json['power_factor'])
+              : json['power_factor'].toDouble(),
       recordedAt: DateTime.parse(json['recorded_at']),
     );
   }
@@ -53,4 +61,5 @@ class DeviceMonitoring {
   String get formattedEnergy => '${energy.toStringAsFixed(2)} kWh';
   String get formattedFrequency => '${frequency.toStringAsFixed(2)} Hz';
   String get formattedPowerFactor => powerFactor.toStringAsFixed(2);
+
 }

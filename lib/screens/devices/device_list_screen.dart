@@ -13,30 +13,38 @@ class DeviceListScreen extends StatefulWidget {
 }
 
 class _DeviceListScreenState extends State<DeviceListScreen> {
-  late Future<List<ClientDevice>> _devicesFuture;
-  bool _isLoading = false;
+  late Stream<List<ClientDevice>> _devicesStream;
+  List<ClientDevice> _devices = [];
+  bool _isLoading = true;
+  String _errorMessage = '';
 
   @override
   void initState() {
     super.initState();
-    _loadDevices();
+    _initializeStream();
   }
 
-  void _loadDevices() {
-    setState(() {
-      _devicesFuture = DeviceService.getDevices();
-    });
-  }
-
-  Future<void> _refreshDevices() async {
-    setState(() => _isLoading = true);
-    try {
-      _loadDevices();
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
+  void _initializeStream() {
+    _devicesStream = DeviceService.streamDevices();
+    _devicesStream.listen(
+      (devices) {
+        if (mounted) {
+          setState(() {
+            _devices = devices;
+            _isLoading = false;
+            _errorMessage = '';
+          });
+        }
+      },
+      onError: (error) {
+        if (mounted) {
+          setState(() {
+            _errorMessage = error.toString();
+            _isLoading = false;
+          });
+        }
+      },
+    );
   }
 
   @override
@@ -44,92 +52,82 @@ class _DeviceListScreenState extends State<DeviceListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Devices'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _refreshDevices,
-            tooltip: 'Refresh',
-          ),
-        ],
+        // Menghapus tombol refresh manual
       ),
-      body: FutureBuilder<List<ClientDevice>>(
-        future: _devicesFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: _buildBody(),
+    );
+  }
 
-          if (snapshot.hasError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('Failed to load devices'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _loadDevices,
-                    child: const Text('Try Again'),
+  Widget _buildBody() {
+    if (_isLoading && _devices.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorMessage.isNotEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(_errorMessage),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _initializeStream,
+              child: const Text('Try Again'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_devices.isEmpty) {
+      return const Center(child: Text('No devices found'));
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(8),
+      itemCount: _devices.length,
+      itemBuilder: (context, index) {
+        final device = _devices[index];
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          child: ListTile(
+            leading: Icon(
+              Icons.devices_other,
+              color: device.isActive ? Colors.green : Colors.grey,
+            ),
+            title: Text(device.deviceName),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (device.latestMonitoringData != null) ...[
+                  Text(
+                    'Power: ${device.latestMonitoringData!.power.toStringAsFixed(2)} W',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  Text(
+                    'Voltage: ${device.latestMonitoringData!.voltage.toStringAsFixed(2)} V',
+                    style: const TextStyle(fontSize: 12),
                   ),
                 ],
-              ),
-            );
-          }
-
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No devices found'));
-          }
-
-          return RefreshIndicator(
-            onRefresh: _refreshDevices,
-            child: ListView.builder(
-              padding: const EdgeInsets.all(8),
-              itemCount: snapshot.data!.length,
-              itemBuilder: (context, index) {
-                final device = snapshot.data![index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                  child: ListTile(
-                    leading: Icon(
-                      Icons.devices_other,
-                      color: device.isActive ? Colors.green : Colors.grey,
-                    ),
-                    title: Text(device.deviceName),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (device.latestMonitoringData != null) ...[
-                          Text(
-                            'Power: ${device.latestMonitoringData!.power.toStringAsFixed(2)} W',
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                          Text(
-                            'Voltage: ${device.latestMonitoringData!.voltage.toStringAsFixed(2)} V',
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ],
-                        if (device.description != null)
-                          Text(
-                            device.description!,
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                      ],
-                    ),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => DeviceDetailScreen(device: device),
-                        ),
-                      );
-                    },
+                if (device.description != null)
+                  Text(
+                    device.description!,
+                    style: const TextStyle(fontSize: 12),
                   ),
-                );
-              },
+              ],
             ),
-          );
-        },
-      ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DeviceDetailScreen(device: device),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
