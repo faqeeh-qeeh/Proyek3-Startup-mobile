@@ -8,6 +8,8 @@ import '../../models/device_monitoring.dart';
 import '../../models/relay_status.dart';
 import 'package:intl/intl.dart';
 import 'dart:math';
+import 'anomaly_list_screen.dart';
+
 class DeviceDetailScreen extends StatefulWidget {
   final ClientDevice device;
 
@@ -41,7 +43,9 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
   }
 
   void _initializeStreams() {
-    _monitoringStream = DeviceService.streamLatestMonitoringData(widget.device.id);
+    _monitoringStream = DeviceService.streamLatestMonitoringData(
+      widget.device.id,
+    );
     _monitoringSubscription = _monitoringStream.listen(
       (data) {
         setState(() {
@@ -71,10 +75,14 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
 
   Future<void> _loadInitialData() async {
     try {
-      final initialData = await DeviceService.getLatestMonitoringData(widget.device.id);
-      final history = await DeviceService.getMonitoringHistory(widget.device.id);
+      final initialData = await DeviceService.getLatestMonitoringData(
+        widget.device.id,
+      );
+      final history = await DeviceService.getMonitoringHistory(
+        widget.device.id,
+      );
       final relays = await DeviceService.getRelayStatuses(widget.device.id);
-      
+
       setState(() {
         _latestData = initialData;
         _monitoringHistory = history.take(10).toList();
@@ -123,7 +131,10 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
           children: [
             CircularProgressIndicator(),
             SizedBox(height: 16),
-            Text('Memuat data perangkat...', style: TextStyle(color: Colors.grey)),
+            Text(
+              'Memuat data perangkat...',
+              style: TextStyle(color: Colors.grey),
+            ),
           ],
         ),
       );
@@ -149,7 +160,10 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
               icon: const Icon(Icons.refresh),
               label: const Text('Coba Lagi'),
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
               ),
               onPressed: _refreshData,
             ),
@@ -177,8 +191,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
       ),
     );
   }
-
-  Widget _buildMonitoringCard(DeviceMonitoring data) {
+Widget _buildMonitoringCard(DeviceMonitoring data) {
   return Container(
     margin: const EdgeInsets.all(16),
     decoration: BoxDecoration(
@@ -199,34 +212,86 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.monitor_heart, color: Theme.of(context).primaryColor),
+              Icon(
+                Icons.monitor_heart,
+                color: Theme.of(context).primaryColor,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Data Monitoring Terkini',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
+                  fontSize: 18,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 4),
           GridView.count(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             crossAxisCount: 2,
             childAspectRatio: 1.8,
             crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
+            mainAxisSpacing: 0,
             children: [
-              _buildMetricCard('Tegangan', data.formattedVoltage, Icons.bolt, Colors.blue),
-              _buildMetricCard('Arus', data.formattedCurrent, Icons.electric_bolt, Colors.green),
-              _buildMetricCard('Daya', data.formattedPower, Icons.power, Colors.red),
-              _buildMetricCard('Energi', data.formattedEnergy, Icons.energy_savings_leaf, Colors.teal),
-              _buildMetricCard('Frekuensi', data.formattedFrequency, Icons.waves, Colors.orange),
-              _buildMetricCard('Faktor Daya', data.formattedPowerFactor, Icons.trending_up, Colors.purple),
+              _buildMetricCard(
+                'Tegangan',
+                data.formattedVoltage,
+                Icons.bolt,
+                Colors.blue,
+              ),
+              _buildMetricCard(
+                'Arus',
+                data.formattedCurrent,
+                Icons.electric_bolt,
+                Colors.green,
+              ),
+              _buildMetricCard(
+                'Daya',
+                data.formattedPower,
+                Icons.power,
+                Colors.red,
+              ),
+              _buildMetricCard(
+                'Energi',
+                data.formattedEnergy,
+                Icons.energy_savings_leaf,
+                Colors.teal,
+              ),
+              _buildMetricCard(
+                'Frekuensi',
+                data.formattedFrequency,
+                Icons.waves,
+                Colors.orange,
+              ),
+              _buildMetricCard(
+                'Faktor Daya',
+                data.formattedPowerFactor,
+                Icons.trending_up,
+                Colors.purple,
+              ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 0),
+          ListTile(
+            contentPadding: EdgeInsets.zero, // Padding diatur nol
+            minLeadingWidth: 24, // Lebar leading icon dikurangi
+            leading: const Icon(Icons.warning_amber, color: Colors.orange, size: 24),
+            title: const Text(
+              'Cek Anomali',
+              style: TextStyle(fontSize: 16), // Ukuran teks diperbesar
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AnomalyListScreen(device: widget.device),
+                ),
+              );
+            },
+          ),
           Divider(color: Colors.grey.shade300),
           const SizedBox(height: 8),
           Row(
@@ -235,7 +300,10 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
               const SizedBox(width: 8),
               Text(
                 'Terakhir diperbarui: ${data.recordedAt.toLocal().toString().substring(0, 16)}',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                style: TextStyle(
+                  color: Colors.grey.shade600, 
+                  fontSize: 12
+                ),
               ),
             ],
           ),
@@ -245,46 +313,50 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
   );
 }
 
-Widget _buildMetricCard(String title, String value, IconData icon, Color color) {
-  return Card(
-    elevation: 0,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12),
-    ),
-    color: Theme.of(context).colorScheme.background,
-    child: Padding(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 20, color: color),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade600,
-                  fontWeight: FontWeight.w500,
+  Widget _buildMetricCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: Theme.of(context).colorScheme.background,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 20, color: color),
+                const SizedBox(width: 4),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color,
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 0),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: color,
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildMetricTile(String title, String value, IconData icon) {
     return Container(
@@ -303,17 +375,14 @@ Widget _buildMetricCard(String title, String value, IconData icon, Color color) 
             children: [
               Text(
                 title,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
               ),
               const SizedBox(height: 4),
               Text(
                 value,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -323,93 +392,98 @@ Widget _buildMetricCard(String title, String value, IconData icon, Color color) 
   }
 
   Widget _buildPowerChart() {
-  // Ambil hanya 10 data terakhir
-  final chartData = _monitoringHistory.take(10).toList().reversed.toList();
+    // Ambil hanya 10 data terakhir
+    final chartData = _monitoringHistory.take(10).toList().reversed.toList();
 
-  return Container(
-    margin: const EdgeInsets.symmetric(horizontal: 16),
-    decoration: BoxDecoration(
-      color: Theme.of(context).colorScheme.surface,
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.1),
-          blurRadius: 10,
-          offset: const Offset(0, 4),
-        ),
-      ],
-    ),
-    child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.show_chart, color: Theme.of(context).primaryColor),
-              const SizedBox(width: 8),
-              Text(
-                'Monitor Daya',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 250,
-            child: SfCartesianChart(
-              plotAreaBorderWidth: 0,
-              primaryXAxis: CategoryAxis(
-                labelRotation: -45,
-                labelStyle: TextStyle(color: Colors.grey.shade600, fontSize: 10),
-                axisLine: const AxisLine(width: 0),
-                majorGridLines: const MajorGridLines(width: 0),
-                majorTickLines: const MajorTickLines(size: 0),
-              ),
-              primaryYAxis: NumericAxis(
-                title: AxisTitle(text: 'Power (W)'),
-                labelStyle: TextStyle(color: Colors.grey.shade600),
-                axisLine: const AxisLine(width: 0),
-                majorTickLines: const MajorTickLines(size: 0),
-                majorGridLines: MajorGridLines(color: Colors.grey.shade200),
-                minimum: 0,
-                maximum: chartData.isNotEmpty 
-                  ? (chartData.map((e) => e.power).reduce(max) * 1.2)
-                  : 120,
-              ),
-              series: <LineSeries<DeviceMonitoring, String>>[
-                LineSeries<DeviceMonitoring, String>(
-                  dataSource: chartData,
-                  xValueMapper: (data, _) => 
-                      '${data.recordedAt.toLocal().minute.toString().padLeft(2, '0')}:${data.recordedAt.toLocal().second.toString().padLeft(2, '0')}',
-                  yValueMapper: (data, _) => data.power,
-                  name: 'Power',
-                  color: Theme.of(context).primaryColor,
-                  width: 2.5,
-                  markerSettings: const MarkerSettings(
-                    isVisible: true,
-                    shape: DataMarkerType.circle,
-                    borderWidth: 2,
-                    borderColor: Colors.white,
-                    color: Colors.blue,
-                    height: 6,
-                    width: 6,
-                  ),
-                ),
-              ],
-              tooltipBehavior: TooltipBehavior(
-                enable: true,
-                format: 'Power: point.y W',
-              ),
-            ),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-    ),
-  );
-}
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.show_chart, color: Theme.of(context).primaryColor),
+                const SizedBox(width: 8),
+                Text(
+                  'Monitor Daya',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 250,
+              child: SfCartesianChart(
+                plotAreaBorderWidth: 0,
+                primaryXAxis: CategoryAxis(
+                  labelRotation: -45,
+                  labelStyle: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 10,
+                  ),
+                  axisLine: const AxisLine(width: 0),
+                  majorGridLines: const MajorGridLines(width: 0),
+                  majorTickLines: const MajorTickLines(size: 0),
+                ),
+                primaryYAxis: NumericAxis(
+                  title: AxisTitle(text: 'Power (W)'),
+                  labelStyle: TextStyle(color: Colors.grey.shade600),
+                  axisLine: const AxisLine(width: 0),
+                  majorTickLines: const MajorTickLines(size: 0),
+                  majorGridLines: MajorGridLines(color: Colors.grey.shade200),
+                  minimum: 0,
+                  maximum:
+                      chartData.isNotEmpty
+                          ? (chartData.map((e) => e.power).reduce(max) * 1.2)
+                          : 120,
+                ),
+                series: <LineSeries<DeviceMonitoring, String>>[
+                  LineSeries<DeviceMonitoring, String>(
+                    dataSource: chartData,
+                    xValueMapper:
+                        (data, _) =>
+                            '${data.recordedAt.toLocal().minute.toString().padLeft(2, '0')}:${data.recordedAt.toLocal().second.toString().padLeft(2, '0')}',
+                    yValueMapper: (data, _) => data.power,
+                    name: 'Power',
+                    color: Theme.of(context).primaryColor,
+                    width: 2.5,
+                    markerSettings: const MarkerSettings(
+                      isVisible: true,
+                      shape: DataMarkerType.circle,
+                      borderWidth: 2,
+                      borderColor: Colors.white,
+                      color: Colors.blue,
+                      height: 6,
+                      width: 6,
+                    ),
+                  ),
+                ],
+                tooltipBehavior: TooltipBehavior(
+                  enable: true,
+                  format: 'Power: point.y W',
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildRelayControls() {
     if (_relayStatuses.isEmpty) return const SizedBox();
@@ -434,13 +508,16 @@ Widget _buildMetricCard(String title, String value, IconData icon, Color color) 
           children: [
             Row(
               children: [
-                Icon(Icons.power_settings_new, color: Theme.of(context).primaryColor),
+                Icon(
+                  Icons.power_settings_new,
+                  color: Theme.of(context).primaryColor,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'Kontrol Relay',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -487,9 +564,7 @@ Widget _buildMetricCard(String title, String value, IconData icon, Color color) 
             );
           }
         },
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -519,9 +594,9 @@ Widget _buildMetricCard(String title, String value, IconData icon, Color color) 
                 const SizedBox(width: 8),
                 Text(
                   'Informasi Perangkat',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -530,10 +605,9 @@ Widget _buildMetricCard(String title, String value, IconData icon, Color color) 
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: _getDeviceInfoItems().length,
-              separatorBuilder: (context, index) => Divider(
-                color: Colors.grey.shade300,
-                height: 24,
-              ),
+              separatorBuilder:
+                  (context, index) =>
+                      Divider(color: Colors.grey.shade300, height: 24),
               itemBuilder: (context, index) {
                 final item = _getDeviceInfoItems()[index];
                 return _buildInfoRow(item['label']!, item['value']!);
@@ -573,10 +647,7 @@ Widget _buildMetricCard(String title, String value, IconData icon, Color color) 
         ),
         Expanded(
           flex: 3,
-          child: Text(
-            value,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+          child: Text(value, style: Theme.of(context).textTheme.bodyMedium),
         ),
       ],
     );
