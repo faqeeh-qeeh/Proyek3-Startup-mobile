@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import '../models/device.dart';
+import '../models/device_monitoring.dart';
 import '../services/mqtt_service.dart';
-
+import '../models/client_device.dart';
+import '../models/device_monitoring.dart';
+import 'dart:convert';
 class DeviceProvider with ChangeNotifier {
   final MqttService _mqttService;
   ClientDevice? _currentDevice;

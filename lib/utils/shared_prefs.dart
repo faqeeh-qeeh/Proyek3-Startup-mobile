@@ -31,4 +31,18 @@ class SharedPrefs {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
   }
+  // Add these to your existing SharedPrefs class
+// lib/utils/shared_prefs.dart - Add these methods to your existing SharedPrefs class
+
+// Add these methods to your existing SharedPrefs class:
+
+static Future<void> saveThemeMode(bool isDarkMode) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setBool('isDarkMode', isDarkMode);
+}
+
+static Future<bool?> getThemeMode() async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getBool('isDarkMode');
+}
 }
